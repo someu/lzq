@@ -36,15 +36,13 @@ class Mixin:
     @staticmethod
     def save_to_csv(filename, data, index, **kwags):
         df = pd.DataFrame(i.to_dict() for i in data)
-        logger.debug(f"保存数据到 {filename}")
-
-        df.set_index(index, drop=True)
+        df = df.set_index(index, drop=True)
         df.to_csv(filename, **kwags)
-        logger.debug(f"保存数据到 {filename} 成功")
+        logger.debug(f"保存数据到 {filename}")
 
     @staticmethod
     def save_to_json(filename, data, index, **kwags):
-        df = pd.DataFrame([i.to_dict for i in data])
+        df = pd.DataFrame(i.to_dict() for i in data)
         df.set_index(index, drop=True)
         df.to_json(filename, **kwags)
         logger.debug(f"保存数据到 {filename}")

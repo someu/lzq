@@ -6,7 +6,6 @@ from time import sleep
 from .utils import every
 from .logger import logger
 from tqdm import tqdm
-import threading
 
 
 def run_with_pool(worker, max_works, paramses, desc):
@@ -29,10 +28,9 @@ def run_with_pool(worker, max_works, paramses, desc):
             while not every(fs, lambda x: x.done()):
                 sleep(1)
             return [f.result() for f in fs]
-        except KeyboardInterrupt as e:
+        except KeyboardInterrupt:
             logger.info("\r\n退出程序...")
             quite = True
             [f.cancel() for f in fs]
             pool.shutdown()
             sys.exit(1)
-            raise e

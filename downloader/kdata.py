@@ -95,7 +95,7 @@ def stock_zh_a_hist(
     code_id: 市场id
     adjust: 复权: qfq,hfq,bfq
     """
-    logger.debug(f"下载 {symbol} {period} {adjust} 行情数据")
+    logger.debug(f"下载 {symbol} {code_id} {period} {adjust} 行情数据")
     adjust_dict = {"qfq": "1", "hfq": "2", "bfq": "0"}
     period_dict = {"daily": "101", "weekly": "102", "monthly": "103"}
     url = "http://push2his.eastmoney.com/api/qt/stock/kline/get"
@@ -113,12 +113,16 @@ def stock_zh_a_hist(
     r = requests.get(url, params=params)
     data_json = r.json()
 
+    if not data_json["data"]:
+        logger.warn(f"无效的数据 {symbol} {code_id} {period} {adjust}")
+        return
+
     kdatas = []
     start_date = data_json["data"]["klines"][0].split(",")[0]
     start_index = offset_index = find_index(trading_dates, start_date)
     end_index = len(trading_dates) - 1
     if start_index == -1:
-        logger.warn(f"无效的日期 {start_date}")
+        logger.warn(f"无效的日期 {symbol} {code_id} {period} {adjust}:  {start_date}")
         return
     for item in data_json["data"]["klines"]:
         [
@@ -135,18 +139,25 @@ def stock_zh_a_hist(
             turnover,
         ] = item.split(",")
         if start_index < offset_index < end_index:
-            last_kdata = kdatas[len(kdatas) - 1]
+            last_kdata_close = 0
+            last_kdata: KData = kdatas[len(kdatas) - 1]
+            if last_kdata:
+                last_kdata_close = last_kdata.close
+            else:
+                logger.warn(f"{symbol} {period} {adjust} 的 {date} 上一条数据为空")
             while date > trading_dates[offset_index + 1]:
                 # 填充停牌
                 kdatas.append(
                     KData(
+                        id=f"{symbol}_{period}_{adjust}_{trading_dates[offset_index + 1]}",
                         code=symbol,
                         adjust=adjust,
+                        period=period,
                         date=trading_dates[offset_index + 1],
-                        open=last_kdata["close"],
-                        close=last_kdata["close"],
-                        high=last_kdata["close"],
-                        low=last_kdata["close"],
+                        open=last_kdata_close,
+                        close=last_kdata_close,
+                        high=last_kdata_close,
+                        low=last_kdata_close,
                         volume=0,
                         amount=0,
                         amplitude=0,
@@ -159,8 +170,10 @@ def stock_zh_a_hist(
                 offset_index += 1
         kdatas.append(
             KData(
+                id=f"{symbol}_{period}_{adjust}_{date}",
                 code=symbol,
                 adjust=adjust,
+                period=period,
                 date=date,
                 open=open,
                 close=close,
@@ -193,8 +206,11 @@ def download_all_stock_zh_a_hist():
     trading_dates = list(info["date"].apply(lambda x: x.strftime("%Y-%m-%d")))
 
     params = []
-    for code in code_id_map:
-        params.append((code, code_id_map[code], trading_dates))
+    index = 0
+    for (code, code_id) in code_id_map.items():
+        params.append((code, code_id, trading_dates))
+        # print(f"{index} {code} {code_id}")
+        index += 1
 
     run_with_pool(stock_zh_a_hist, Config.RequestWorker, params, desc="下载股票行情数据")
 
