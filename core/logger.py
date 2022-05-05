@@ -1,12 +1,12 @@
 # -*- coding: UTF-8 -*-
 
 import logging
-from core.common.config import Config
+from .config import Config
 from os import path
 from datetime import datetime
 
 
-def get_logger(name="Default"):
+def get_logger(name="LZQ"):
     '''设置日志logger'''
     logger = logging.getLogger(name)
     formatter = logging.Formatter(fmt=Config.LogFormat)

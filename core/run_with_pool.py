@@ -3,8 +3,8 @@
 from concurrent.futures import ThreadPoolExecutor
 import sys
 from time import sleep
-from core.common.utils import every
-from core.common.logger import logger
+from .utils import every
+from .logger import logger
 from tqdm import tqdm
 import threading
 
@@ -15,8 +15,8 @@ def run_with_pool(worker, max_works, paramses, desc):
 
     def _worer(params):
         if not quite:
-            logger.debug(f"[{threading.currentThread()}] 开始执行")
-            r = worker(params)
+            # logger.debug(f"[{threading.currentThread()}] 开始执行")
+            r = worker(*params)
             pbar.update(1)
             return r
         else:
