@@ -56,3 +56,30 @@ class Mixin:
                 result.append(item.to_dict())
             return pd.DataFrame(result)
 
+    @classmethod
+    def from_json(cls, filename):
+        df = pd.read_json(filename)
+        objs = []
+        for index, row in df.iterrows():
+            objs.append(cls(**row.to_dict()))
+        return objs
+    
+    @classmethod
+    def from_csv(cls, filename):
+        df = pd.read_csv(filename)
+        objs = []
+        for index, row in df.iterrows():
+            objs.append(cls(**row.to_dict()))
+        return objs
+
+    @classmethod
+    def clear_db(cls):
+        with safe_sessionmaker() as session:
+            session.query(cls).delete()
+
+    @classmethod
+    def save_to_db(cls, data):
+        with safe_sessionmaker() as session:
+            session.add_all(data)
+            logger.debug(f'存入{len(data)}条{cls.__name__}数据')
+

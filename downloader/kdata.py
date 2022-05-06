@@ -1,3 +1,4 @@
+from textwrap import indent
 import requests
 import pandas as pd
 import akshare as ak
@@ -5,7 +6,6 @@ from core.config import Config
 from core.run_with_pool import run_with_pool
 from model.kdata import KData
 
-# from core.sql import safe_sessionmaker
 from core.logger import logger
 
 
@@ -190,14 +190,9 @@ def stock_zh_a_hist(
         )
         offset_index += 1
     logger.debug(f"保存 {len(kdatas)} 条数据")
-    KData.save_to_csv(
-        f"{Config.OUTPUT_DIR}/{symbol}_{period}_{adjust}.csv", kdatas, "date"
-    )
-    # with safe_sessionmaker() as session:
-    #     session.query(KData).filter(
-    #         KData.code == symbol, KData.period == period, KData.adjust == adjust,
-    #     ).delete()
-    #     session.add_all(kdatas)
+    csv_file = f"{Config.OUTPUT_DIR}/{symbol}_{period}_{adjust}.csv"
+    KData.save_to_csv(csv_file, kdatas, "date")
+    return csv_file
 
 
 def download_all_stock_zh_a_hist():
@@ -206,11 +201,20 @@ def download_all_stock_zh_a_hist():
     trading_dates = list(info["date"].apply(lambda x: x.strftime("%Y-%m-%d")))
 
     params = []
-    index = 0
     for (code, code_id) in code_id_map.items():
         params.append((code, code_id, trading_dates))
-        # print(f"{index} {code} {code_id}")
-        index += 1
 
-    run_with_pool(stock_zh_a_hist, Config.RequestWorker, params, desc="下载股票行情数据")
+    csvs = run_with_pool(stock_zh_a_hist, Config.RequestWorker, params, desc="下载股票行情数据")
+
+    # 存入数据库
+    KData.clear_db()
+    kdatas = []
+    batch_count = 100000
+    for csv in csvs:
+        kdatas.extend(KData.from_csv(csv))
+        if len(kdatas) >= batch_count:
+            KData.save_to_db(kdatas)
+            kdatas = []
+    if len(kdatas) > 0:
+        KData.save_to_db(kdatas)
 

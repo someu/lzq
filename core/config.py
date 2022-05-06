@@ -18,7 +18,7 @@ class Config():
 
     # 存储
     OUTPUT_DB_URL = _config.get("storage", 'db_url')
-    OUTPUT_DIR = _config.get('storage', 'csv_dir')
+    OUTPUT_DIR = path.join(_base_path, _config.get('storage', 'csv_dir'))
 
     # 日志
     LogDirPath = path.join(_base_path, _config.get("log", "output"))

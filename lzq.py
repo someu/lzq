@@ -1,25 +1,27 @@
 # -*- coding: UTF-8 -*-
 
 import importlib
+from typing import List
 import fire
 from core.logger import logger
 import os
 
 from downloader.kdata import download_all_stock_zh_a_hist
+from model.kdata import KData
 
 
 class LazyQuant:
-    '''A way to lazy quant'''
+    """A way to lazy quant"""
 
     def downloadall(self, period="daily", adjust="hfq"):
-        '''下载所有数据：股票信息、股票历史行情'''
+        """下载所有数据：股票信息、股票历史行情"""
         from data.download import download_all_a_stock_k_data, download_all_a_stock
 
         download_all_a_stock()
         download_all_a_stock_k_data(period=period, adjust=adjust)
 
     def download(self, code, period="daily", adjust="hfq"):
-        '''下载单个股票数据。period取值daily、weekly、monthly。adjust取值qfq、hfq或bfq'''
+        """下载单个股票数据。period取值daily、weekly、monthly。adjust取值qfq、hfq或bfq"""
         from data.download import download_individual_stock, download_a_stock_k_data
         from datetime import datetime
 
@@ -30,7 +32,7 @@ class LazyQuant:
         download_a_stock_k_data((code, period, start_date, end_date, adjust))
 
     def list(self):
-        '''查看策略列表'''
+        """查看策略列表"""
         strageies = os.listdir(f"stragies")
         index = 1
         for file in strageies:
@@ -42,14 +44,16 @@ class LazyQuant:
             index += 1
 
     def run(self, stragey):
-        '''运行策略'''
+        """运行策略"""
         m = importlib.import_module(f"stragies.{stragey}")
         logger.info(f"引入 {stragey} 模块")
         m.start()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # fire.Fire(LazyQuant)
     # from data.download import download_all_a_stock_k_data, download_all_a_stock
     # download_all_a_stock_k_data()
     download_all_stock_zh_a_hist()
+    
+
