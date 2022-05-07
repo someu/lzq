@@ -113,7 +113,11 @@ def stock_zh_a_hist(
     r = requests.get(url, params=params)
     data_json = r.json()
 
-    if not data_json["data"]:
+    if (
+        not data_json["data"]
+        or not data_json["data"]["klines"]
+        or not data_json["data"]["klines"][0]
+    ):
         logger.warn(f"无效的数据 {symbol} {code_id} {period} {adjust}")
         return
 
